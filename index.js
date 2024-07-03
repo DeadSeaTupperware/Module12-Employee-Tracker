@@ -40,9 +40,47 @@ function userPrompt() {
             }
         ])
         .then((data) => {
-            switch (data.selector) {
+
+            let option = data.selector;
+
+            switch (option) {
                 case 'View All Employees':
-                    pool.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(manager.first_name, ' ', manager.last_name) AS manager 
+                    viewEmployees();
+                    break;
+
+                case 'Add Employee':
+                    addEmployee();
+                    break;
+
+                case 'Update Employee Role':
+                    updateEmployeeRole();
+                    break;
+
+                case 'View All Roles':
+                    viewRoles();
+                    break;
+
+                case 'Add Role':
+                    addRole();
+                    break;
+
+                case 'View All Departments':
+                    viewDepartments();
+                    break;
+
+                case 'Add Department':
+                    addDepartment();
+                    break;
+
+                case 'Quit':
+                    console.log("Goodbye.");
+                    return process.exit();
+            }
+        });
+};
+
+function viewEmployees() {
+    pool.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(manager.first_name, ' ', manager.last_name) AS manager 
                     FROM employee 
                     LEFT JOIN role ON employee.role_id = role.id 
                     LEFT JOIN department ON role.department_id = department.id 
@@ -54,45 +92,57 @@ function userPrompt() {
                         }
                     });
                     console.log("Viewing All Employees");
-                    break;
-                    
+}
 
-                case 'Add Employee':
-                    pool.query(`SELECT * FROM employee`, function (err, { rows: employee }) {
-                        console.table(employee);
-                    });
-                    console.log("Add Employee");
-                    break;
+function addEmployee() {
+    
+}
 
-                case 'Update Employee Role':
-                    console.log("Add Employee");
-                    break;
+function updateEmployeeRole() {
 
-                case 'View All Roles':
-                    pool.query(`SELECT id, title, salary FROM role`, function (err, { rows: role }) {
-                        console.table(role);
-                    });
-                    console.log("Viewing All Roles");
-                    break;
+}
 
-                case 'Add Role':
-                    console.log("Add Employee");
-                    break;
+function viewRoles() {
+    pool.query(`SELECT id, title, salary FROM role`, function (err, { rows: role }) {
+        console.table(role);
+    });
+    console.log("Viewing All Roles");
+}
 
-                case 'View All Departments':
-                    pool.query(`SELECT * FROM department`, function (err, { rows: department }) {
-                        console.table(department);
-                    });
-                    console.log("Viewing All Roles");
-                    break;
+function addRole() {
 
-                case 'Add Department':
-                    console.log("Add Employee");
-                    break;
+}
 
-                case 'Quit':
-                    console.log("Goodbye.");
-                    return process.exit();
+function viewDepartments() {
+    pool.query(`SELECT * FROM department`, function (err, { rows: department }) {
+        console.table(department);
+    });
+    console.log("Viewing All Departments");
+}
+
+function addDepartment() {
+    inquirer
+        .prompt ([
+            {
+                type: 'input',
+                message: "What is the name of the department?",
+                name: 'newDepartment'
             }
-        })
+        ])
+        .then((data) => {
+            //TO DO: INSERT THE INPUT INTO THE department TABLE
+            const newDepartmentName = data.newDepartment;
+
+            pool.query('INSERT INTO department (name) VALUES ($1)',
+                [newDepartmentName],
+                (err, result) => {
+                    if (err) {
+                        console.error('Error adding department:', err);
+                    } else {
+                        console.log(`Department '${newDepartmentName}' added successfully.`);
+                        viewDepartments();
+                    }
+                }
+            );
+        });
 }
