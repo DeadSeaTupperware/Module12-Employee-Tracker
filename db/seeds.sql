@@ -1,5 +1,5 @@
 -- Inserts names of departments into department table
-INSERT INTO department (name)
+INSERT INTO department (department_name)
 VALUES
   ('Sales'),
   ('Engineering'),
