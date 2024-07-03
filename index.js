@@ -16,7 +16,6 @@ pool.connect(err => {
         console.error('Connection error', err.stack);
     } else {
         console.log('Connected to the employee_tracker_db database.');
-        userPrompt();
     }
 });
 
@@ -95,7 +94,63 @@ function viewEmployees() {
 }
 
 function addEmployee() {
-    
+    // inquirer
+    //     .prompt ([
+    //         {
+    //             type: 'input',
+    //             message: "What is the employee's first name?",
+    //             name: 'newFN'
+    //         },
+    //         {
+    //             type: 'input',
+    //             message: "What is the employee's last name?",
+    //             name: 'newLN'
+    //         },
+    //         {
+    //             type: 'list',
+    //             message: "What is the employee's role?",
+    //             name: 'newEmpRole',
+    //             choices: ['Engineering', 'Finance', 'Legal', 'Sales', 'Service']
+    //         }
+    //     ])
+    //     .then((data) => {
+    //         const newRoleName = data.newRole;
+    //         const newRoleSalary = data.newSalary;
+    //         const newRoleDepartment = data.whichDepartment;
+
+    //         // Get the department_id based on the department name
+    //         let departmentId;
+    //         switch (newRoleDepartment) {
+    //             case 'Engineering':
+    //                 departmentId = 1;
+    //                 break;
+    //             case 'Finance':
+    //                 departmentId = 2;
+    //                 break;
+    //             case 'Legal':
+    //                 departmentId = 3;
+    //                 break;
+    //             case 'Sales':
+    //                 departmentId = 4;
+    //                 break;
+    //             case 'Service':
+    //                 departmentId = 5;
+    //                 break;
+    //         }
+
+    //         pool.query(
+    //             `INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)`,
+    //             [newRoleName, newRoleSalary, departmentId],
+    //             (error, results) => {
+    //                 if (error) {
+    //                     console.error('Error adding role:', error);
+    //                 } else {
+    //                     console.log('Role added successfully!');
+    //                     // viewRoles();
+    //                 }
+    //             }
+    //         );
+    //     });
 }
 
 function updateEmployeeRole() {
@@ -110,7 +165,52 @@ function viewRoles() {
 }
 
 function addRole() {
+// const { rows } = pool.query(`SELECT * FROM department`);
+// To-Do: Somehow collect department choices from department table to use in inquirer prompt.
+const departmentChoices = rows.map(({id, name}) => {
+    ({
+        name: name,
+        value: id,
+    })
+});
 
+    inquirer
+        .prompt ([
+            {
+                type: 'input',
+                message: "What is the name of the role?",
+                name: 'newRole'
+            },
+            {
+                type: 'input',
+                message: "What is the salary of the role?",
+                name: 'newSalary'
+            },
+            {
+                type: 'list',
+                message: "Which department does the role belong to?",
+                name: 'whichDepartment',
+                choices: departmentChoices
+            }
+        ])
+        .then((data) => {
+            const newRoleName = data.newRole;
+            const newRoleSalary = data.newSalary;
+            const newRoleDepartment = data.whichDepartment;
+
+            pool.query(
+                `INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)`,
+                [newRoleName, newRoleSalary, newRoleDepartment],
+                (error, results) => {
+                    if (error) {
+                        console.error('Error adding role:', error);
+                    } else {
+                        console.log('Role added successfully!');
+                        viewRoles();
+                    }
+                }
+            );
+        });
 }
 
 function viewDepartments() {
@@ -130,7 +230,6 @@ function addDepartment() {
             }
         ])
         .then((data) => {
-            //TO DO: INSERT THE INPUT INTO THE department TABLE
             const newDepartmentName = data.newDepartment;
 
             pool.query('INSERT INTO department (name) VALUES ($1)',
@@ -140,9 +239,11 @@ function addDepartment() {
                         console.error('Error adding department:', err);
                     } else {
                         console.log(`Department '${newDepartmentName}' added successfully.`);
-                        viewDepartments();
+                        // viewDepartments();
                     }
                 }
             );
         });
 }
+
+userPrompt();
