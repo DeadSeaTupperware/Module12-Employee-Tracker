@@ -5,7 +5,7 @@ CREATE DATABASE employee_tracker_db;
 
 CREATE TABLE department (
     id SERIAL PRIMARY KEY,
-    department_name VARCHAR(30) UNIQUE NOT NULL
+    name VARCHAR(30) UNIQUE NOT NULL
 );
 
 CREATE TABLE role (

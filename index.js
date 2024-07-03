@@ -19,7 +19,7 @@ function userPrompt() {
         .prompt ([
             {
                 type: 'list',
-                message: "What would you like to do?"
+                message: "What would you like to do?",
                 name: 'selector',
                 choices: [
                     'View All Employees', 
@@ -33,4 +33,47 @@ function userPrompt() {
                 ]
             }
         ])
+        .then((data) => {
+            switch (data.selector) {
+                case 'View All Employees':
+                    pool.query(`SELECT * FROM employee`, function (err, { rows: employee }) {
+                        console.table(employee);
+                    });
+                    console.log("Viewing All Employees");
+                    break;
+
+                case 'Add Employee':
+                    pool.query(`SELECT * FROM employee`, function (err, { rows: employee }) {
+                        console.table(employee);
+                    });
+                    console.log("Add Employee");
+                    break;
+
+                case 'Update Employee Role':
+                    console.log("Add Employee");
+                    break;
+
+                case 'View All Roles':
+                    console.log("Add Employee");
+                    break;
+
+                case 'Add Role':
+                    console.log("Add Employee");
+                    break;
+
+                case 'View All Departments':
+                    console.log("Add Employee");
+                    break;
+
+                case 'Add Department':
+                    console.log("Add Employee");
+                    break;
+
+                case 'Quit':
+                    console.log("Add Employee");
+                    break;
+            }
+        })
 }
+
+userPrompt();
