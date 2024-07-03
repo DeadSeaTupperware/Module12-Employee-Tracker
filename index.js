@@ -8,11 +8,17 @@ const pool = new Pool(
         user: 'postgres',
         password: '7001Sql!',
         database: 'employee_tracker_db'
-    },
-    console.log(`Connected to the employee_tracker_db database.`)
+    }
 )
 
-pool.connect();
+pool.connect(err => {
+    if (err) {
+        console.error('Connection error', err.stack);
+    } else {
+        console.log('Connected to the employee_tracker_db database.');
+        userPrompt();
+    }
+});
 
 function userPrompt() {
     inquirer
@@ -36,11 +42,20 @@ function userPrompt() {
         .then((data) => {
             switch (data.selector) {
                 case 'View All Employees':
-                    pool.query(`SELECT * FROM employee`, function (err, { rows: employee }) {
-                        console.table(employee);
+                    pool.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(manager.first_name, ' ', manager.last_name) AS manager 
+                    FROM employee 
+                    LEFT JOIN role ON employee.role_id = role.id 
+                    LEFT JOIN department ON role.department_id = department.id 
+                    LEFT JOIN employee manager ON manager.id = employee.manager_id;`, function (err, { rows: employee }) {
+                        if (err) {
+                            console.error(err);
+                        } else {
+                            console.table(employee);
+                        }
                     });
                     console.log("Viewing All Employees");
                     break;
+                    
 
                 case 'Add Employee':
                     pool.query(`SELECT * FROM employee`, function (err, { rows: employee }) {
@@ -54,7 +69,10 @@ function userPrompt() {
                     break;
 
                 case 'View All Roles':
-                    console.log("Add Employee");
+                    pool.query(`SELECT id, title, salary FROM role`, function (err, { rows: role }) {
+                        console.table(role);
+                    });
+                    console.log("Viewing All Roles");
                     break;
 
                 case 'Add Role':
@@ -62,7 +80,10 @@ function userPrompt() {
                     break;
 
                 case 'View All Departments':
-                    console.log("Add Employee");
+                    pool.query(`SELECT * FROM department`, function (err, { rows: department }) {
+                        console.table(department);
+                    });
+                    console.log("Viewing All Roles");
                     break;
 
                 case 'Add Department':
@@ -70,10 +91,8 @@ function userPrompt() {
                     break;
 
                 case 'Quit':
-                    console.log("Add Employee");
-                    break;
+                    console.log("Goodbye.");
+                    return process.exit();
             }
         })
 }
-
-userPrompt();
