@@ -89,8 +89,8 @@ function viewEmployees() {
                         } else {
                             console.table(employee);
                         }
+                        userPrompt();
                     });
-                    console.log("Viewing All Employees");
 }
 
 function addEmployee() {
@@ -157,6 +157,7 @@ const managerChoices = result.rows.map((data) => (
                         console.log('Employee added successfully!');
                         // viewEmployees();
                     }
+                    userPrompt();
                 }
             );
         });
@@ -164,34 +165,88 @@ const managerChoices = result.rows.map((data) => (
 }
 
 function updateEmployeeRole() {
+    pool.query(`SELECT role.id AS role_id, role.title AS role_title, role.salary, role.department_id, employee.id AS employee_id, employee.first_name AS employee_first_name, employee.last_name AS employee_last_name
+        FROM role
+        LEFT JOIN employee ON role.id = employee.role_id`, function (err, result) {
 
+        // console.log(result.rows);
+
+            const roleChoices = result.rows.map((data) => (
+                    {
+                        value: data.role_id,
+                        name: `${data.role_title}`, // Display role title
+                    }
+            )); 
+
+            const employeeChoices = result.rows.map((data) => (
+                {
+                    value: data.employee_id,
+                    name: `${data.employee_first_name} ${data.employee_last_name}`,
+                }
+            ));
+
+            inquirer
+                .prompt ([
+                    {
+                        type: 'list',
+                        message: "Which employee's role do you want to update?",
+                        name: 'whichEmployee',
+                        choices: employeeChoices
+                    },
+                    {
+                        type: 'list',
+                        message: "Which role do you want to assign the selected employee?",
+                        name: 'whichRole',
+                        choices: roleChoices
+                    }
+                ])
+                .then((data) => {
+                    const updateEmp = data.whichEmployee;
+                    const updateRole = data.whichRole;
+
+                    pool.query(
+                        `UPDATE employee
+                        SET role_id = $1
+                        WHERE id = $2`,
+                        [updateRole, updateEmp],
+                        (err, result) => {
+                            if (err) {
+                                console.error("Error updating employee role:", err);
+                            } else {
+                                console.log("Employee role updated successfully!");
+                                // viewEmployees();
+                            }
+                            userPrompt();
+                        }
+                    );
+
+                });
+    });
 }
 
 function viewRoles() {
     pool.query(`SELECT role.id, role.title, department.name AS department, role.salary 
                 FROM role
                 LEFT JOIN department ON role.department_id = department.id;`, function (err, { rows: role }) {
-
-                    console.table(role);
-
-    });
-    
-    console.log("Viewing All Roles");
+                    if (err) {
+                        console.error(err);
+                    } else {
+                        console.table(role);
+                    }
+                    userPrompt();
+                });
 }
 
 function addRole() {
 
 pool.query(`SELECT * FROM department`, function (err, result) {
-    // console.log(result.rows);
 
-    const departmentChoices = result.rows.map((dep) => (
+    const departmentChoices = result.rows.map((data) => (
         {
-            value: dep.id,
-            name: dep.name,
+            value: data.id,
+            name: data.name,
         }
     ));
-
-    console.log(departmentChoices);
 
         inquirer
             .prompt ([
@@ -227,6 +282,7 @@ pool.query(`SELECT * FROM department`, function (err, result) {
                             console.log('Role added successfully!');
                             // viewRoles();
                         }
+                        userPrompt();
                     }
                 );
             });
@@ -236,9 +292,13 @@ pool.query(`SELECT * FROM department`, function (err, result) {
 
 function viewDepartments() {
     pool.query(`SELECT * FROM department`, function (err, { rows: department }) {
-        console.table(department);
+        if (err) {
+            console.error(err);
+        } else {
+            console.table(department);
+        }
+        userPrompt();
     });
-    console.log("Viewing All Departments");
 }
 
 function addDepartment() {
@@ -262,6 +322,7 @@ function addDepartment() {
                         console.log(`Department '${newDepartmentName}' added successfully.`);
                         // viewDepartments();
                     }
+                    userPrompt();
                 }
             );
         });
