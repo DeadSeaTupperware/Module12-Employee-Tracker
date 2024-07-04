@@ -94,63 +94,73 @@ function viewEmployees() {
 }
 
 function addEmployee() {
-    // inquirer
-    //     .prompt ([
-    //         {
-    //             type: 'input',
-    //             message: "What is the employee's first name?",
-    //             name: 'newFN'
-    //         },
-    //         {
-    //             type: 'input',
-    //             message: "What is the employee's last name?",
-    //             name: 'newLN'
-    //         },
-    //         {
-    //             type: 'list',
-    //             message: "What is the employee's role?",
-    //             name: 'newEmpRole',
-    //             choices: ['Engineering', 'Finance', 'Legal', 'Sales', 'Service']
-    //         }
-    //     ])
-    //     .then((data) => {
-    //         const newRoleName = data.newRole;
-    //         const newRoleSalary = data.newSalary;
-    //         const newRoleDepartment = data.whichDepartment;
 
-    //         // Get the department_id based on the department name
-    //         let departmentId;
-    //         switch (newRoleDepartment) {
-    //             case 'Engineering':
-    //                 departmentId = 1;
-    //                 break;
-    //             case 'Finance':
-    //                 departmentId = 2;
-    //                 break;
-    //             case 'Legal':
-    //                 departmentId = 3;
-    //                 break;
-    //             case 'Sales':
-    //                 departmentId = 4;
-    //                 break;
-    //             case 'Service':
-    //                 departmentId = 5;
-    //                 break;
-    //         }
+    pool.query(`SELECT role.id AS role_id, role.title AS role_title, role.salary, role.department_id, employee.id AS manager_id, employee.first_name AS manager_first_name, employee.last_name AS manager_last_name
+        FROM role
+        LEFT JOIN employee ON role.id = employee.role_id`, function (err, result) {
 
-    //         pool.query(
-    //             `INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)`,
-    //             [newRoleName, newRoleSalary, departmentId],
-    //             (error, results) => {
-    //                 if (error) {
-    //                     console.error('Error adding role:', error);
-    //                 } else {
-    //                     console.log('Role added successfully!');
-    //                     // viewRoles();
-    //                 }
-    //             }
-    //         );
-    //     });
+// console.log(result.rows);
+
+const roleChoices = result.rows.map((data) => (
+        {
+            value: data.role_id,
+            name: `${data.role_title}`, // Display role title
+        }
+)); 
+
+const managerChoices = result.rows.map((data) => (
+    {
+        value: data.manager_id,
+        name: `${data.manager_first_name} ${data.manager_last_name}`,
+    }
+));
+
+
+    inquirer
+        .prompt ([
+            {
+                type: 'input',
+                message: "What is the employee's first name?",
+                name: 'newFN'
+            },
+            {
+                type: 'input',
+                message: "What is the employee's last name?",
+                name: 'newLN'
+            },
+            {
+                type: 'list',
+                message: "What is the employee's role?",
+                name: 'whichRole',
+                choices: roleChoices
+            },
+            {
+                type: 'list',
+                message: "Who is the employee's manager?",
+                name: 'whichManager',
+                choices: managerChoices
+            }
+        ])
+        .then((data) => {
+            const newEmpFN = data.newFN;
+            const newEmpLN = data.newLN;
+            const newEmpRole = data.whichRole;
+            const newEmpManager = data.whichManager;
+
+            pool.query(
+                `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)`,
+                [newEmpFN, newEmpLN, newEmpRole, newEmpManager],
+                (error, results) => {
+                    if (error) {
+                        console.error('Error adding employee:', error);
+                    } else {
+                        console.log('Employee added successfully!');
+                        // viewEmployees();
+                    }
+                }
+            );
+        });
+    });
 }
 
 function updateEmployeeRole() {
@@ -158,58 +168,69 @@ function updateEmployeeRole() {
 }
 
 function viewRoles() {
-    pool.query(`SELECT id, title, salary FROM role`, function (err, { rows: role }) {
-        console.table(role);
+    pool.query(`SELECT role.id, role.title, department.name AS department, role.salary 
+                FROM role
+                LEFT JOIN department ON role.department_id = department.id;`, function (err, { rows: role }) {
+
+                    console.table(role);
+
     });
+    
     console.log("Viewing All Roles");
 }
 
 function addRole() {
-// const { rows } = pool.query(`SELECT * FROM department`);
-// To-Do: Somehow collect department choices from department table to use in inquirer prompt.
-const departmentChoices = rows.map(({id, name}) => {
-    ({
-        name: name,
-        value: id,
-    })
-});
 
-    inquirer
-        .prompt ([
-            {
-                type: 'input',
-                message: "What is the name of the role?",
-                name: 'newRole'
-            },
-            {
-                type: 'input',
-                message: "What is the salary of the role?",
-                name: 'newSalary'
-            },
-            {
-                type: 'list',
-                message: "Which department does the role belong to?",
-                name: 'whichDepartment',
-                choices: departmentChoices
-            }
-        ])
-        .then((data) => {
-            const newRoleName = data.newRole;
-            const newRoleSalary = data.newSalary;
-            const newRoleDepartment = data.whichDepartment;
+pool.query(`SELECT * FROM department`, function (err, result) {
+    // console.log(result.rows);
 
-            pool.query(
-                `INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)`,
-                [newRoleName, newRoleSalary, newRoleDepartment],
-                (error, results) => {
-                    if (error) {
-                        console.error('Error adding role:', error);
-                    } else {
-                        console.log('Role added successfully!');
-                        viewRoles();
-                    }
+    const departmentChoices = result.rows.map((dep) => (
+        {
+            value: dep.id,
+            name: dep.name,
+        }
+    ));
+
+    console.log(departmentChoices);
+
+        inquirer
+            .prompt ([
+                {
+                    type: 'input',
+                    message: "What is the name of the role?",
+                    name: 'newRole'
+                },
+                {
+                    type: 'input',
+                    message: "What is the salary of the role?",
+                    name: 'newSalary'
+                },
+                {
+                    type: 'list',
+                    message: "Which department does the role belong to?",
+                    name: 'whichDepartment',
+                    choices: departmentChoices
                 }
-            );
+            ])
+            .then((data) => {
+                const newRoleName = data.newRole;
+                const newRoleSalary = data.newSalary;
+                const newRoleDepartment = data.whichDepartment;
+
+                pool.query(
+                    `INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)`,
+                    [newRoleName, newRoleSalary, newRoleDepartment],
+                    (error, results) => {
+                        if (error) {
+                            console.error('Error adding role:', error);
+                        } else {
+                            console.log('Role added successfully!');
+                            // viewRoles();
+                        }
+                    }
+                );
+            });
+
         });
 }
 
